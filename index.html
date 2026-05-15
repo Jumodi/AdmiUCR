@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador UCR-TEC-UNA | Smart Learning CR</title>
+    <style>
+        :root {
+            --primary: #0f4c81;
+            --primary-light: #1a6bb5;
+            --secondary: #64748b;
+            --bg: #f0f4f8;
+            --card: #ffffff;
+            --success: #10b981;
+            --success-bg: #d1fae5;
+            --error: #ef4444;
+            --error-bg: #fee2e2;
+            --warning: #f59e0b;
+            --warning-bg: #fef3c7;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+        }
+
+        .practice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--error);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            transition: width 0.3s ease;
+        }
+
+        .question-text {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .context-text {
+            background: #f8fafc;
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            font-style: italic;
+            color: var(--text-light);
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .option {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            text-align: left;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .option:hover:not(.disabled) {
+            border-color: var(--primary);
+            background: #f8fafc;
+        }
+
+        .option.selected-correct {
+            background: var(--success-bg);
+            border-color: var(--success);
+            color: #065f46;
+        }
+
+        .option.selected-wrong {
+            background: var(--error-bg);
+            border-color: var(--error);
+            color: #991b1b;
+        }
+
+        .option.correct-answer {
+            background: var(--success-bg);
+            border-color: var(--success);
+            color: #065f46;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        .option.disabled {
+            cursor: default;
+            opacity: 0.9;
+        }
+
+        .option-letter {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .option.selected-correct .option-letter,
+        .option.correct-answer .option-letter {
+            background: var(--success);
+            color: white;
+        }
+
+        .option.selected-wrong .option-letter {
+            background: var(--error);
+            color: white;
+        }
+
+        .explanation {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: var(--warning-bg);
+            border: 1px solid #fcd34d;
+            border-radius: 0.75rem;
+            color: #92400e;
+            font-size: 0.95rem;
+            display: none;
+        }
+
+        .explanation.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .explanation strong {
+            color: #78350f;
+        }
+
+        .quiz-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+            gap: 1rem;
+        }
+
+        .results-summary {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .score-circle {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary) calc(var(--pct) * 1%), #e2e8f0 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            position: relative;
+        }
+
+        .score-circle::before {
+            content: '';
+            width: 130px;
+            height: 130px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .score-text {
+            position: relative;
+            z-index: 1;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .result-dot {
+            aspect-ratio: 1;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .result-dot:hover {
+            transform: scale(1.1);
+        }
+
+        .result-dot.correct {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .result-dot.wrong {
+            background: var(--error-bg);
+            color: var(--error);
+        }
+
+        .result-dot.skipped {
+            background: #e2e8f0;
+            color: var(--text-light);
+        }
+
+        .stat-box {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 0.75rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .review-item {
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background: white;
+            border: 2px solid #e2e8f0;
+        }
+
+        .review-item.correct-border {
+            border-color: var(--success);
+        }
+
+        .review-item.wrong-border {
+            border-color: var(--error);
+        }
+
+        .label {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .label-correct {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .label-wrong {
+            background: var(--error-bg);
+            color: var(--error);
+        }
+
+        @media (max-width: 640px) {
+            .practice-grid {
+                grid-template-columns: 1fr;
+            }
+            .quiz-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .stat-box {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<<header>
+    <h1>Simulador de Razonamiento Verbal</h1>
+    <p>UCR · TEC · UNA | Smart Learning CR</p>
+</header>
+
+<div class="container">
+
+    <!-- HOME SCREEN -->
+    <div id="screen-home" class="screen active">
+        <div class="card" style="text-align:center;">
+            <h2 style="margin-bottom:0.5rem;">Elige un modo de práctica</h2>
+            <p style="color:var(--text-light); margin-bottom:1.5rem;">111 preguntas oficiales con respuestas y explicaciones</p>
+            <button class="btn btn-success" onclick="startFullExam()" style="margin-bottom:1rem;">🎯 Simulacro Completo (111 preguntas)</button>
+            <p style="color:var(--text-light); font-size:0.875rem; margin-bottom:1rem;">— o practica por sección —</p>
+        </div>
+        <div class="practice-grid" id="practice-buttons">
+            <!-- Buttons injected by JS -->
+        </div>
+    </div>
+
+    <!-- QUIZ SCREEN -->
+    <div id="screen-quiz" class="screen">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+        
+        <div class="quiz-header">
+            <span class="badge" id="practice-badge">Práctica 1</span>
+            <span style="color:var(--text-light); font-weight:600;" id="question-counter">Pregunta 1 de 22</span>
+        </div>
+
+        <div class="card">
+            <div class="context-text" id="context-box" style="display:none;"></div>
+            <div class="question-text" id="question-text"></div>
+            <div class="options" id="options-container"></div>
+            
+            <div class="explanation" id="explanation-box">
+                <strong>💡 Explicación:</strong>
+                <p id="explanation-text" style="margin-top:0.5rem;"></p>
+            </div>
+        </div>
+
+        <div class="quiz-nav">
+            <button class="btn btn-secondary" id="btn-prev" onclick="prevQuestion()">← Anterior</button>
+            <button class="btn btn-primary" id="btn-next" onclick="nextQuestion()">Siguiente →</button>
+        </div>
+        <div style="text-align:center; margin-top:1rem;">
+            <button class="btn btn-danger" style="width:auto; padding:0.5rem 1rem; font-size:0.875rem;" onclick="finishQuiz()">Finalizar simulacro</button>
+        </div>
+    </div>
+
+    <!-- RESULTS SCREEN -->
+    <div id="screen-results" class="screen">
+        <div class="card results-summary">
+            <h2 style="margin-bottom:0.5rem;">Resultados del Simulacro</h2>
+            <div class="score-circle" id="score-circle">
+                <div class="score-text" id="score-text">0%</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-correct">0</div>
+                    <div class="stat-label">Correctas</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-wrong">0</div>
+                    <div class="stat-label">Incorrectas</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-total">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="showReview()">📋 Revisar respuestas</button>
+            <button class="btn btn-secondary" onclick="goHome()" style="margin-top:0.75rem;">🏠 Volver al inicio</button>
+        </div>
+
+        <div id="review-container" style="display:none;">
+            <h3 style="margin:1.5rem 0 1rem;">Revisión detallada</h3>
+            <div id="review-list"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ========================
+// DATA: 111 PREGUNTAS
+// ========================
+
+const practices = [
+    { id: 1, name: "Práctica 1: Comprensión de lectura", count: 22 },
+    { id: 2, name: "Práctica 2: Comprensión de lectura", count: 20 },
+    { id: '2a', name: "Práctica Adicional: Completar oraciones", count: 10 },
+    { id: 3, name: "Práctica 3: Completar oraciones", count: 17 },
+    { id: 4, name: "Práctica 4: Completar oraciones", count: 22 },
+    { id: 5, name: "Práctica 5: Proposiciones y Predicados", count: 20 }
+];
+
+const allQuestions = [
+    // =================== PRÁCTICA 1 ===================
+    {
+        practice: 1, id: "1.1",
+        context: "En las profundidades del mar, dadas sus características especiales, existe una fauna completamente desconocida en otras partes del mar.",
+        question: "Del texto anterior es correcto concluir que, respecto a las diferentes partes del mar, la fauna de las profundidades es, con certeza:",
+        options: ["A) muy compleja", "B) muy variada", "C) distinta", "D) exótica", "E) rara"],
+        answer: 2,
+        explanation: "\"Desconocida en otras partes\" significa que la fauna es diferente o distinta."
+    },
+    {
+        practice: 1, id: "1.2",
+        context: "A altos pensamientos es preciso que correspondan sublimes expresiones.",
+        question: "El texto anterior propone una correspondencia entre:",
+        options: ["A) exponer y expresar", "B) hablar y representar", "C) meditar y observar", "D) explicar y sugerir", "E) reflexionar y comunicar"],
+        answer: 4,
+        explanation: "\"Pensamientos\" se relaciona con reflexionar y \"expresiones\" con comunicar."
+    },
+    {
+        practice: 1, id: "1.3",
+        context: "Es buen pensador quien sabe ver en los objetos todo lo que hay, pero no más de lo que hay.",
+        question: "Según el texto anterior, para ser buen pensador es necesaria una:",
+        options: ["A) ágil intuición", "B) firme opinión", "C) justa observación", "D) amplia imaginación", "E) rápida percepción"],
+        answer: 2,
+        explanation: "Ver \"todo lo que hay, pero no más\" implica observar con exactitud y justicia."
+    },
+    {
+        practice: 1, id: "1.4",
+        context: "Cuando la verdad alcanza un plano supremo se convierte en virtud suprema.",
+        question: "Del texto anterior se concluye que:",
+        options: ["A) sin verdad no hay virtud", "B) a menos verdad, menos virtud", "C) a menos virtud, menos verdad", "D) a máxima verdad, máxima virtud", "E) a mínima verdad, mínima virtud"],
+        answer: 3,
+        explanation: "Si la verdad alcanza el plano supremo, se convierte en virtud suprema."
+    },
+    {
+        practice: 1, id: "1.5",
+        context: "Los conocimientos astronómicos de los griegos estaban llenos de datos indefinidos acerca de las estrellas, los planetas y sus movimientos; sólo en los últimos tiempos lograron un alto grado de exactitud.",
+        question: "Del texto anterior se concluye que: Los griegos desarrollaron sus conocimientos astronómicos:",
+        options: ["A) con datos vagos que fueron precisando", "B) con datos elementales que fueron ampliando", "C) con datos erróneos que fueron cambiando", "D) con datos escasos que fueron multiplicando", "E) con datos aislados que fueron relacionando"],
+        answer: 0,
+        explanation: "Los datos eran indefinidos y luego alcanzaron exactitud, es decir, se fueron precisando."
+    },
+    {
+        practice: 1, id: "1.6",
+        context: "La importancia de la trigonometría en el siglo pasado derivó de la necesidad de su aplicación a la astronomía, navegación y agrimensura.",
+        question: "Del texto anterior es correcto concluir que: En el siglo pasado, la trigonometría fue muy importante por su:",
+        options: ["A) eficacia técnica", "B) utilidad práctica", "C) carácter científico", "D) capacidad productiva", "E) desarrollo teórico"],
+        answer: 1,
+        explanation: "Su importancia provino de sus aplicaciones, por lo tanto, de su utilidad práctica."
+    },
+    {
+        practice: 1, id: "1.7",
+        context: "Ningún propósito es tan alto que permita considerar legítimos los métodos indignos para alcanzarlo.",
+        question: "¿Cuál de las siguientes expresiones resume la idea central del texto anterior?",
+        options: ["A) Un buen medio legitima un mal fin", "B) Un buen medio conduce a un buen fin", "C) Un buen fin legitima cualquier medio", "D) Un buen fin no justifica un mal medio", "E) Un buen fin no determina un buen medio"],
+        answer: 3,
+        explanation: "El texto afirma que ningún fin alto justifica métodos indignos."
+    },
+    {
+        practice: 1, id: "1.8",
+        context: "Cuando recibimos elogios de algunas personas, nos quedamos pendientes de sus labios por temer que sus alabanzas no sean sino un antecedente de críticas. Quien pronuncia una alabanza asume, al menos por un momento, la posición de juez.",
+        question: "Del texto anterior, con certeza es correcto concluir que: Quien alaba,",
+        options: ["A) se arriesga a ser criticado", "B) ejerce una función superior", "C) conoce los defectos ajenos", "D) enjuicia", "E) busca el favor de los demás"],
+        answer: 3,
+        explanation: "Quien alaba asume posición de juez, por eso enjuicia."
+    },
+    {
+        practice: 1, id: "1.9",
+        context: "La Teoría de la Evolución restableció la continuidad entre el ser humano y los animales, que había sido negada por Descartes cuando atribuyó alma sólo al ser humano.",
+        question: "Del texto anterior se concluye que: La Teoría de la Evolución",
+        options: ["A) inventó el concepto de continuidad entre el ser humano y los animales", "B) amplió el concepto de continuidad entre el ser humano y los animales", "C) negó la existencia del alma", "D) contradijo la teoría de Descartes", "E) desprestigió la teoría de Descartes"],
+        answer: 3,
+        explanation: "La Teoría de la Evolución contradijo la separación planteada por Descartes."
+    },
+    {
+        practice: 1, id: "1.10",
+        context: "Aunque la velocidad de una partícula en suspensión no es observable, el efecto de una sucesión de desplazamiento de éstas puede localizarse e inclusive estudiarse con ayuda del microscopio.",
+        question: "El fenómeno mencionado en el texto se vuelve localizable a causa de la:",
+        options: ["A) precisión del desplazamiento", "B) repetición del desplazamiento", "C) duración del desplazamiento", "D) regularidad del desplazamiento", "E) dirección del desplazamiento"],
+        answer: 1,
+        explanation: "El fenómeno se localiza por una sucesión, es decir, por la repetición de desplazamientos."
+    },
+    {
+        practice: 1, id: "1.11",
+        context: "De jóvenes decimos que la justicia es lo mínimo que podemos esperar de nuestros semejantes; de adultos, que es lo máximo que podemos esperar de nosotros mismos.",
+        question: "Según el texto: La opinión que, con respecto a la justicia tiene el hombre a través de su vida, es:",
+        options: ["A) optimista", "B) pesimista", "C) constante", "D) inconstante", "E) realista"],
+        answer: 3,
+        explanation: "La opinión cambia de la juventud a la adultez, por eso es inconstante."
+    },
+    {
+        practice: 1, id: "1.12",
+        context: "La palabra es un ser viviente a causa del espíritu que la anima: la idea.",
+        question: "Según el texto anterior:",
+        options: ["A) El espíritu genera las ideas", "B) El ser viviente crea las ideas", "C) Toda idea se traduce en palabras", "D) Toda palabra origina una idea", "E) La vida de la palabra reside en la idea"],
+        answer: 4,
+        explanation: "La palabra vive gracias a la idea que la anima."
+    },
+    {
+        practice: 1, id: "1.13",
+        context: "El calor del sol evapora el agua de las superficies de los mares, lagos y ríos; este vapor de agua asciende a la atmósfera, forma las nubes y se precipita como lluvia sobre la tierra. El ciclo se repite y por ello siempre tenemos fuentes de agua.",
+        question: "Según el texto anterior: Las fuentes de agua existen porque el proceso cíclico de evaporación y precipitación se da en forma:",
+        options: ["A) espontánea", "B) frecuente", "C) reiterada", "D) intensiva", "E) acelerada"],
+        answer: 2,
+        explanation: "El ciclo \"se repite\", por eso ocurre de forma reiterada."
+    },
+    {
+        practice: 1, id: "1.14",
+        context: "No hay que volar como hoja, hay que volar como ave: con rumbo.",
+        question: "En este pensamiento, la palabra rumbo se interpreta como:",
+        options: ["A) el camino que conduce al éxito", "B) la expectativa del mundo futuro", "C) la realización de proyectos con planes definidos", "D) la angustiosa espera de lo que el destino deparará", "E) la imitación de las aves que pueden volar muy alto"],
+        answer: 2,
+        explanation: "\"Rumbo\" significa dirección, propósito o planes definidos."
+    },
+    {
+        practice: 1, id: "1.15",
+        context: "El presente es producto del pasado, por lo tanto, es vano el intento de presentar lo que hoy somos como invento exclusivo de los seres humanos actuales.",
+        question: "El texto anterior se refiere preferentemente al:",
+        options: ["A) origen del presente", "B) poderío del pasado", "C) repudio del futuro", "D) valor del pasado", "E) producto del presente"],
+        answer: 0,
+        explanation: "El texto explica que el presente proviene del pasado."
+    },
+    {
+        practice: 1, id: "1.16",
+        context: "Apreciar una pintura es -en cierta forma- colaborar en su creación.",
+        question: "Para que la afirmación del texto sea verdadera, es necesario aceptar que:",
+        options: ["A) La obra de arte no es un producto individual", "B) La obra de arte no se dirige al gran público", "C) El valor de la obra de arte no depende del artista", "D) La creación artística no se realiza por inspiración externa", "E) La apreciación artística no requiere inteligencia sino sensibilidad"],
+        answer: 0,
+        explanation: "Si apreciar una obra colabora con su creación, la obra no es solo producto individual."
+    },
+    {
+        practice: 1, id: "1.17",
+        context: "El ser humano puede sobrevivir tres semanas sin alimentos y tres días sin agua, pero será afortunado quien dure tres horas sin el calor necesario.",
+        question: "Según el texto anterior, el ser humano es:",
+        options: ["A) más resistente al frío que al hambre", "B) más resistente al hambre que al frío", "C) menos resistente a la sed que al frío", "D) más resistente a la sed que al hambre", "E) menos resistente al hambre que al frío"],
+        answer: 1,
+        explanation: "El ser humano resiste más tiempo sin alimento que sin calor."
+    },
+    {
+        practice: 1, id: "1.18",
+        context: "Una película de ciencia ficción presenta tres de las muchas especies de extraterrestres existentes. Los individuos de una de ellas respiran agua y exhalan humo; los individuos de otra respiran agua y exhalan aire y los de la tercera especie respiran agua y exhalan agua. El agua que interviene en sus procesos respiratorios está compuesta, igual que en el planeta Tierra, de oxígeno e hidrógeno; el aire, por su parte, tiene otros componentes distintos de los del aire terrestre.",
+        question: "De la información anterior, se puede concluir, con certeza, que:",
+        options: ["A) las tres especies de extraterrestres tienen fosas nasales", "B) las tres especies de extraterrestres necesitan oxígeno para existir", "C) los extraterrestres extraen el agua de la atmósfera", "D) los extraterrestres respiran de la misma forma que los humanos", "E) las tres especies de extraterrestres necesitan oxigenar sus pulmones"],
+        answer: 1,
+        explanation: "Las tres especies respiran agua, y el agua contiene oxígeno."
+    },
+    {
+        practice: 1, id: "1.19",
+        context: "En las sociedades agrícolas o recolectoras, la transmisión oral de leyendas, mitos y anécdotas es una actividad importante: sirve tanto para educar como para entretener.",
+        question: "Los tres procesos centrales que expone el texto anterior son:",
+        options: ["A) leyendas - mitos - anécdotas", "B) anécdotas - educación - entretenimiento", "C) recolección - transmisión oral - leyendas", "D) agricultura - recolección - transmisión oral", "E) transmisión oral - educación - entretenimiento"],
+        answer: 4,
+        explanation: "El texto destaca transmisión oral, educación y entretenimiento."
+    },
+    {
+        practice: 1, id: "1.20",
+        context: "En un gas, las moléculas tienen siempre gran libertad de movimiento porque las fuerzas de atracción resultan demasiado débiles para conservarlas unidas entre sí.",
+        question: "Según el texto anterior, las moléculas que constituyen los gases tienden a:",
+        options: ["A) separarse", "B) unirse", "C) acercarse", "D) repelerse", "E) estabilizarse"],
+        answer: 0,
+        explanation: "Las fuerzas débiles no conservan unidas las moléculas, por eso tienden a separarse."
+    },
+    {
+        practice: 1, id: "1.21",
+        context: "En los anuncios comerciales el mueble es siempre práctico, el hogar siempre tranquilo, las vacaciones siempre encantadoras, la gente siempre bella y el ambiente siempre perfecto.",
+        question: "De acuerdo con el texto anterior, la realidad en los anuncios comerciales es siempre:",
+        options: ["A) verosímil", "B) idealizada", "C) verdadera", "D) falsa", "E) creíble"],
+        answer: 1,
+        explanation: "Los anuncios presentan una realidad perfecta, es decir, idealizada."
+    },
+    {
+        practice: 1, id: "1.22",
+        context: "En la medida en que la Ciencia se vuelve más abstracta y en consecuencia más lejana de los problemas reales y de las palabras de la vida diaria, su utilidad aumenta.",
+        question: "Del texto anterior, se concluye que en el campo científico, cuanta:",
+        options: ["A) más utilidad, menos realidad", "B) más abstracción, mayor utilidad", "C) menos abstracción, más realidad", "D) menos profundidad, menos utilidad", "E) menos profundidad, más realidad"],
+        answer: 1,
+        explanation: "El texto dice que, cuanto más abstracta es la ciencia, más aumenta su utilidad."
+    },
+
+    // =================== PRÁCTICA 2 ===================
+    {
+        practice: 2, id: "2.1",
+        context: "Un español y un francés del siglo XVIII se parecían más entre sí y tenían más en común, que un francés del siglo XIX y otro francés del siglo XVIII.",
+        question: "Entonces, en la situación mencionada ocurrió que:",
+        options: ["A) El espacio diferenció más que el tiempo", "B) El tiempo diferenció más que el espacio", "C) El tiempo no diferenció porque no varió el espacio", "D) La diferenciación se dio solo por combinación de espacio y tiempo", "E) Tiempo y espacio diferenciaron por igual"],
+        answer: 1,
+        explanation: "Dos personas de países distintos en el mismo siglo se parecen más que dos franceses de siglos distintos, por eso el tiempo diferencia más."
+    },
+    {
+        practice: 2, id: "2.2",
+        context: "La técnica no es la dominación de la naturaleza: sino una inteligente adaptación a las leyes de la naturaleza.",
+        question: "Fundamentalmente, los conceptos que se relacionan en este texto son:",
+        options: ["A) inteligencia y técnica", "B) dominación y naturaleza", "C) técnica y naturaleza", "D) control y técnica", "E) inteligencia y naturaleza"],
+        answer: 2,
+        explanation: "El texto relaciona técnica y naturaleza."
+    },
+    {
+        practice: 2, id: "2.3",
+        context: "El manatí es un extraño animal. Pese a que es mamífero. Solo vive en el agua y cuando está en tierra, se siente muy incómodo.",
+        question: "Del texto anterior se concluye que: Los mamíferos",
+        options: ["A) no suelen vivir en el agua", "B) no pueden vivir en el agua", "C) solo pueden vivir en el agua", "D) no suelen vivir en la tierra", "E) solo pueden vivir en la tierra"],
+        answer: 0,
+        explanation: "El manatí es extraño porque, aunque es mamífero, vive en el agua; se infiere que no es lo usual."
+    },
+    {
+        practice: 2, id: "2.4",
+        context: "Científicos de varios países del mundo han determinado que la Tierra es capaz de alimentar varias veces la población actual. Sin embargo hoy, en todo el mundo, se mantienen campañas diversas de control de natalidad.",
+        question: "Del texto anterior, con certeza, se puede concluir que: Las medidas que en la actualidad se aplican para controlar la natalidad, no se originan en razones:",
+        options: ["A) económicas", "B) políticas", "C) sociales", "D) culturales", "E) nutricionales"],
+        answer: 4,
+        explanation: "Si la Tierra puede alimentar más población, el control de natalidad no se debe a razones nutricionales."
+    },
+    {
+        practice: 2, id: "2.5",
+        context: "La libertad hay que conquistarla y reconquistarla continuamente. Si importa saber cómo fuimos libres, importa más saber cómo permanecer libres.",
+        question: "Con respecto a la libertad, el autor del texto señala que lo más importante es:",
+        options: ["A) permanecer libres", "B) conquistar la libertad", "C) reconquistar la libertad", "D) saber cómo fuimos libres", "E) valorar la libertad"],
+        answer: 0,
+        explanation: "Lo más importante no es haber sido libres, sino permanecer libres."
+    },
+    {
+        practice: 2, id: "2.6",
+        context: "No es la verdad la que engrandece al hombre, sino el hombre quien engrandece a la verdad.",
+        question: "Según el autor del texto anterior:",
+        options: ["A) Solo el hombre es importante", "B) Solo la verdad es importante", "C) Es más importante el hombre que la verdad", "D) Es más importante la verdad que el hombre", "E) Es tan importante el hombre como la verdad"],
+        answer: 2,
+        explanation: "El texto da mayor relevancia al ser humano, pues este engrandece la verdad."
+    },
+    {
+        practice: 2, id: "2.7",
+        context: "Conocer una obra literaria es conocer el alma que la creó y que, sin duda, la creó con el objeto de hacer conocer su alma.",
+        question: "El texto anterior se refiere preferentemente a:",
+        options: ["A) La creatividad del autor", "B) la espontaneidad del autor", "C) la intencionalidad del autor", "D) la sensibilidad del autor", "E) la popularidad del autor"],
+        answer: 2,
+        explanation: "La obra se crea con el objeto de dar a conocer el alma del autor; hay intencionalidad."
+    },
+    {
+        practice: 2, id: "2.8",
+        context: "El desarrollo puramente intelectual, impide el desarrollo de la parte del espíritu que no es intelectual.",
+        question: "Según el texto anterior:",
+        options: ["A) El espíritu tiene solamente dos partes", "B) El espíritu tiene más de dos partes", "C) El espíritu no puede ser fragmentado", "D) Las partes del espíritu son indeterminadas", "E) El espíritu tiene, por lo menos, una parte que no es intelectual"],
+        answer: 4,
+        explanation: "El texto afirma que existe una parte del espíritu que no es intelectual."
+    },
+    {
+        practice: 2, id: "2.9",
+        context: "Hay un camino directo desde la investigación científica de la electricidad hasta la electrotécnica moderna; desde el descubrimiento de los rayos X hasta la técnica radiológica.",
+        question: "Del texto anterior se concluye que: La investigación científica",
+        options: ["A) estabiliza la técnica", "B) aprovecha la técnica", "C) simplifica la técnica", "D) precede a la técnica", "E) modifica la técnica"],
+        answer: 3,
+        explanation: "La investigación científica aparece antes que la técnica derivada de ella."
+    },
+    {
+        practice: 2, id: "2.10",
+        context: "El \"yo\" no es únicamente la abstracción que tiene como atributo el pensamiento, sino el individuo completo de quien el cuerpo es una parte esencial.",
+        question: "Según el texto anterior:",
+        options: ["A) El cuerpo es una sustancia concreta", "B) El \"yo\" es solo una parte del cuerpo", "C) El pensamiento es un atributo del cuerpo", "D) El cuerpo es un elemento constitutivo del \"yo\"", "E) Dos partes constituyen al individuo: el cuerpo y el \"yo\""],
+        answer: 3,
+        explanation: "El cuerpo es presentado como parte esencial del \"yo\"."
+    },
+    {
+        practice: 2, id: "2.11",
+        context: "El bien es el objeto que se considera como última perfección de todas las cosas.",
+        question: "En el texto anterior, el bien se entiende como:",
+        options: ["A) objeto útil para ser perfecto", "B) máxima perfección alcanzable", "C) objetivo buscado por la perfección", "D) medio para alcanzar la perfección", "E) medio de perfeccionar todas las cosas"],
+        answer: 1,
+        explanation: "El bien se entiende como la última o máxima perfección."
+    },
+    {
+        practice: 2, id: "2.12",
+        context: "La evolución del hombre nos muestra un continuo caminar hacia la vida en comunidad. Esta ha sido posible gracias al esfuerzo conjunto de trabajo y conocimiento, que permitió la supervivencia de nuestra especie.",
+        question: "La idea fundamental del texto anterior se expresa en la proposición:",
+        options: ["A) El hombre es un ser predestinado a la vida en comunidad", "B) La necesidad de sobrevivir llevó al hombre al progreso", "C) Fue el deseo de convivencia lo que permitió al hombre vivir en comunidad", "D) La supervivencia del hombre es una consecuencia del instinto de conservación", "E) La tendencia a la vida en sociedad ha estado siempre presente en el desarrollo evolutivo del hombre"],
+        answer: 4,
+        explanation: "El texto señala que la evolución humana camina continuamente hacia la vida en comunidad."
+    },
+    {
+        practice: 2, id: "2.13",
+        context: "El que sabe dejarse llevar plenamente por la música, siente que esta no solo es capaz de elevar su grado de sensibilidad, sino que le permite encontrarse a sí mismo.",
+        question: "De acuerdo con el texto anterior: La música",
+        options: ["A) inspira sentimientos y motiva actitudes", "B) transmite sensaciones y agudiza la razón", "C) estimula la emotividad y descubre el interior", "D) desborda la imaginación y favorece la reflexión", "E) refuerza la concentración y favorece la memoria"],
+        answer: 2,
+        explanation: "La música eleva la sensibilidad y permite el encuentro interior."
+    },
+    {
+        practice: 2, id: "2.14",
+        context: "En épocas primitivas, el hombre, al igual que otros animales, estuvo subordinado a la naturaleza, pero hoy, al dominar las fuerzas de esta, se ha convertido en soberano indiscutible de su ambiente.",
+        question: "Del texto anterior, con certeza, es correcto concluir que: Con respecto al hombre primitivo, el hombre actual es más:",
+        options: ["A) fuerte", "B) libre", "C) inteligente", "D) feliz", "E) trabajador"],
+        answer: 1,
+        explanation: "El ser humano actual domina su ambiente, por eso es más libre frente a la naturaleza."
+    },
+    {
+        practice: 2, id: "2.15",
+        context: "Todos los cuerpos están formados por materia. Donde no existe materia, decimos que hay vacío.",
+        question: "¿Cuál de las siguientes opciones no se deduce del texto?",
+        options: ["A) En el vacío hay ausencia de materia", "B) En el vacío hay ausencia de cuerpos", "C) El concepto de cuerpo presupone el concepto de materia", "D) La materia solamente se presenta en forma de cuerpo", "E) La materia es un elemento esencial a los cuerpos"],
+        answer: 3,
+        explanation: "El texto no afirma que la materia solo exista en forma de cuerpo."
+    },
+    {
+        practice: 2, id: "2.16",
+        context: "Puede juzgarse el mayor grado de civilización de un pueblo por la superior posición social de la mujer.",
+        question: "Según el texto anterior: El grado de civilización de un pueblo y la posición social de la mujer",
+        options: ["A) no se relacionan entre sí", "B) se relacionan solo en parte", "C) guardan una relación inversa", "D) guardan una relación directa", "E) solo se relacionan en algunas culturas"],
+        answer: 3,
+        explanation: "A mayor civilización, mayor posición social de la mujer: relación directa."
+    },
+    {
+        practice: 2, id: "2.17",
+        context: "Las almas más grandes son capaces tanto de los más grandes vicios, como de las más grandes virtudes.",
+        question: "Según el texto: Vicio y virtud",
+        options: ["A) son equivalentes", "B) se condicionan", "C) pueden coexistir", "D) suelen hallarse juntos", "E) son exclusivos de las almas grandes"],
+        answer: 2,
+        explanation: "Las almas grandes pueden tener grandes vicios y grandes virtudes, por eso pueden coexistir."
+    },
+    {
+        practice: 2, id: "2.18",
+        context: "Actualmente, la industria ballenera está a punto de desaparecer. Las grandes manadas de ballenas se han exterminado y es preciso recurrir a la tecnología, para localizar las huellas de las pocas que quedan.",
+        question: "La idea central del texto se refiere a:",
+        options: ["A) la próxima desaparición de la industria ballenera", "B) la dificultad para evitar la desaparición de las ballenas", "C) la desaparición acelerada de las ballenas", "D) la importancia de la tecnología en la industria ballenera", "E) la importancia de la industria ballenera"],
+        answer: 0,
+        explanation: "La idea principal es que la industria ballenera está por desaparecer."
+    },
+    {
+        practice: 2, id: "2.19",
+        context: "El calor del sol evapora el agua de las superficies de los mares, lagos y ríos; este vapor de agua asciende a la atmósfera, forma las nubes y se precipita como lluvia sobre la tierra. El ciclo se repite y, por ello, siempre tenemos fuentes de agua.",
+        question: "Según el texto anterior: Las fuentes de agua existen porque el proceso cíclico de evaporación y precipitación se da en forma:",
+        options: ["A) espontánea", "B) frecuente", "C) reiterada", "D) intensiva", "E) acelerada"],
+        answer: 2,
+        explanation: "El ciclo se repite, por eso el proceso es reiterado."
+    },
+    {
+        practice: 2, id: "2.20",
+        context: "Más vale pensar en lo que nos proponemos hacer, que pasar la noche en vela pensando en lo que hicimos.",
+        question: "En el texto anterior: Se concede:",
+        options: ["A) más valor al presente que al pasado", "B) más valor al futuro que al presente", "C) menos valor al pasado que al futuro", "D) menos valor al presente que al futuro", "E) igual valor al futuro que al presente"],
+        answer: 2,
+        explanation: "Se valora más pensar en lo que se hará que en lo ya hecho; el futuro vale más que el pasado."
+    },
+
+    // =================== PRÁCTICA ADICIONAL (2a) ===================
+    {
+        practice: '2a', id: "A.1",
+        context: null,
+        question: "\"La propuesta fue revisada por dos comités; ____, se incorporaron ajustes significativos.\"",
+        options: ["A) en cambio", "B) por lo tanto", "C) sin embargo", "D) no obstante", "E) con todo"],
+        answer: 1,
+        explanation: "\"Se incorporaron ajustes\" es consecuencia de la revisión."
+    },
+    {
+        practice: '2a', id: "A.2",
+        context: null,
+        question: "\"El informe no es ____: deja abiertas varias interpretaciones.\"",
+        options: ["A) unívoco", "B) parcial", "C) sólido", "D) válido", "E) extenso"],
+        answer: 0,
+        explanation: "Si deja varias interpretaciones, no es unívoco."
+    },
+    {
+        practice: '2a', id: "A.3",
+        context: null,
+        question: "\"La técnica se perfecciona ____, el análisis se vuelve más complejo.\"",
+        options: ["A) por el contrario", "B) A medida que", "C) Aun cuando", "D) Pese a", "E) Sin que"],
+        answer: 1,
+        explanation: "\"A medida que\" expresa progreso paralelo entre técnica y análisis."
+    },
+    {
+        practice: '2a', id: "A.4",
+        context: null,
+        question: "\"El programa carece ____ financiamiento para su ejecución.\"",
+        options: ["A) en", "B) de", "C) a", "D) con", "E) por"],
+        answer: 1,
+        explanation: "El verbo \"carecer\" exige la preposición \"de\"."
+    },
+    {
+        practice: '2a', id: "A.5",
+        context: null,
+        question: "\"El autor cita numerosos estudios; ____, su postura sigue siendo especulativa.\"",
+        options: ["A) por ende", "B) así pues", "C) con todo", "D) por consiguiente", "E) de ahí que"],
+        answer: 2,
+        explanation: "\"Con todo\" introduce contraste: hay estudios, pero la postura sigue siendo especulativa."
+    },
+    {
+        practice: '2a', id: "A.6",
+        context: null,
+        question: "\"El equipo decidió ____ nuevas hipótesis a partir de los datos.\"",
+        options: ["A) fabricar", "B) plantar", "C) plantear", "D) escribir", "E) reproducir"],
+        answer: 2,
+        explanation: "La colocación correcta es \"plantear hipótesis\"."
+    },
+    {
+        practice: '2a', id: "A.7",
+        context: null,
+        question: "\"El hallazgo no fue casual; ____, respondió a una búsqueda sistemática.\"",
+        options: ["A) más bien", "B) por el contrario", "C) sin embargo", "D) aun así", "E) con todo"],
+        answer: 0,
+        explanation: "\"Más bien\" corrige la idea de casualidad y presenta la explicación adecuada."
+    },
+    {
+        practice: '2a', id: "A.8",
+        context: null,
+        question: "\"A pesar de la complejidad del tema, el orador mantuvo un estilo ____.\"",
+        options: ["A) críptico", "B) objetivo", "C) barroco", "D) recargado", "E) hermético"],
+        answer: 1,
+        explanation: "A pesar de la complejidad, se espera un estilo claro y objetivo."
+    },
+    {
+        practice: '2a', id: "A.9",
+        context: null,
+        question: "\"La evidencia presentada es insuficiente; ____, no puede aceptarse la hipótesis.\"",
+        options: ["A) por el contrario", "B) por ende", "C) asimismo", "D) aun así", "E) sin embargo"],
+        answer: 1,
+        explanation: "La insuficiencia de evidencia trae como consecuencia que no se acepte la hipótesis."
+    },
+    {
+        practice: '2a', id: "A.10",
+        context: null,
+        question: "\"El protocolo exige consentimiento informado; ____, garantiza la autonomía del paciente.\"",
+        options: ["A) por lo tanto", "B) aunque", "C) en cambio", "D) no obstante", "E) a pesar de"],
+        answer: 0,
+        explanation: "El consentimiento informado garantiza la autonomía; hay relación de consecuencia."
+    },
+
+    // =================== PRÁCTICA 3 ===================
+    {
+        practice: 3, id: "3.1",
+        context: null,
+        question: "La vida se conserva mediante la lucha y por más penosa que ésta sea, no disminuimos nuestro ____ cuando se trata de mantener nuestra propia existencia.",
+        options: ["A) ejemplo", "B) propósito", "C) apoyo", "D) esfuerzo", "E) optimismo"],
+        answer: 3,
+        explanation: "Para conservar la vida no disminuimos el esfuerzo."
+    },
+    {
+        practice: 3, id: "3.2",
+        context: null,
+        question: "Telescopios equipados con cámaras fotográficas han tomado fotografías excepcionalmente ____, pues a altitudes de más de 25000 metros, la atmósfera terrestre es muy transparente.",
+        options: ["A) nítidas", "B) valiosas", "C) originales", "D) ampliadas", "E) detalladas"],
+        answer: 0,
+        explanation: "La transparencia de la atmósfera permite fotografías nítidas."
+    },
+    {
+        practice: 3, id: "3.3",
+        context: null,
+        question: "Para que una proposición cualquiera alcance la categoría de \"verdad\" debe ser tan ____ al espíritu, como lo son al ojo los objetos que están presentes, a la debida distancia y en medio de la luz.",
+        options: ["A) útil", "B) evidente", "C) cercana", "D) atractiva", "E) necesaria"],
+        answer: 1,
+        explanation: "La comparación con objetos visibles al ojo apunta a lo evidente."
+    },
+    {
+        practice: 3, id: "3.4",
+        context: null,
+        question: "La cualidad que distingue a las producciones artísticas que ofrecen carácter propio se llama ____.",
+        options: ["A) autenticidad", "B) profundidad", "C) superioridad", "D) plasticidad", "E) personalidad"],
+        answer: 4,
+        explanation: "El \"carácter propio\" de una obra se asocia con su personalidad."
+    },
+    {
+        practice: 3, id: "3.5",
+        context: null,
+        question: "Entre los griegos, las divinidades agrícolas secundarias se caracterizaban por su aspecto ____; mitad hombre, mitad animal.",
+        options: ["A) imperfecto", "B) incompleto", "C) ambiguo", "D) deforme", "E) mixto"],
+        answer: 4,
+        explanation: "\"Mitad hombre, mitad animal\" indica aspecto mixto."
+    },
+    {
+        practice: 3, id: "3.6",
+        context: null,
+        question: "No es filósofo el que sabe las cosas, sino el que las ____, como no es rico el que sabe dónde está el tesoro, sino el que lo ____.",
+        options: ["A) vive - posee", "B) estudia - encuentra", "C) aprecia - guarda", "D) recuerda - muestra", "E) enjuicia - administra"],
+        answer: 0,
+        explanation: "No basta saber las cosas; el filósofo debe vivirlas, como el rico posee el tesoro."
+    },
+    {
+        practice: 3, id: "3.7",
+        context: null,
+        question: "Todas las partes de nuestro ser solo se fortifican trabajando; por eso el ____ es esencial al desarrollo de los seres vivos.",
+        options: ["A) equilibrio", "B) dinamismo", "C) descanso", "D) estudio", "E) progreso"],
+        answer: 1,
+        explanation: "Si todo se fortalece trabajando, el dinamismo es esencial."
+    },
+    {
+        practice: 3, id: "3.8",
+        context: null,
+        question: "El humo del tabaco contiene dos componentes ____, que se utilizaron durante la Primera Guerra Mundial para producir, irremediablemente, el exterminio del enemigo.",
+        options: ["A) infecciosos", "B) malsanos", "C) mortíferos", "D) venenosos", "E) dañinos"],
+        answer: 2,
+        explanation: "Si producen exterminio, son componentes mortíferos."
+    },
+    {
+        practice: 3, id: "3.9",
+        context: null,
+        question: "Durante mucho tiempo, el ser humano utilizó las partes de su propio cuerpo como instrumentos de medición. Todavía hoy se utilizan unidades como el codo y el pie, pero el ser humano ha preferido otras. La ____ de tales medidas residía en su ____.",
+        options: ["A) ventaja - utilidad", "B) única ventaja - precisión", "C) mayor ventaja - antigüedad", "D) desventaja - variabilidad", "E) única desventaja - inexactitud"],
+        answer: 3,
+        explanation: "La variabilidad de esas medidas era una desventaja."
+    },
+    {
+        practice: 3, id: "3.10",
+        context: null,
+        question: "Como el poeta tiene el afán de quebrantar toda ley formal, las leyes formales que podamos descubrir en su poesía son inconscientes, involuntarias y además, no generales; esto es, tendencias, pero no ____.",
+        options: ["A) correspondencias", "B) contradicciones", "C) orientaciones", "D) tradiciones", "E) reglas"],
+        answer: 4,
+        explanation: "Las tendencias no generales no llegan a ser reglas."
+    },
+    {
+        practice: 3, id: "3.11",
+        context: null,
+        question: "Este pueblo no tiene vida ____, no existe una palabra que pueda revelar una noble inquietud interior, ni un pensamiento que no sea puramente animal.",
+        options: ["A) real", "B) social", "C) intelectual", "D) espiritual", "E) individual"],
+        answer: 3,
+        explanation: "La falta de inquietud interior y pensamiento elevado indica ausencia de vida espiritual."
+    },
+    {
+        practice: 3, id: "3.12",
+        context: null,
+        question: "Probablemente lo más extraordinario del arte español sea esa ____ que permite reunir, en un fondo común, toda su historia.",
+        options: ["A) individualidad", "B) fecundidad", "C) homogeneidad", "D) originalidad", "E) subjetividad"],
+        answer: 2,
+        explanation: "Reunir toda la historia en un fondo común implica homogeneidad."
+    },
+    {
+        practice: 3, id: "3.13",
+        context: null,
+        question: "En la relación sentimiento-intelecto, el voluntarismo irracionalista afirma que la vida afectiva prevalece sobre el ____.",
+        options: ["A) racional", "B) afectiva", "C) integral", "D) social", "E) individual"],
+        answer: 1,
+        explanation: "El voluntarismo irracionalista privilegia la vida afectiva sobre el intelecto (según la lógica del texto)."
+    },
+    {
+        practice: 3, id: "3.14",
+        context: null,
+        question: "Al hablar de arte en el mundo moderno, se hace cada vez más difícil señalar diferencias nacionales, puesto que han desaparecido ____ y predomina un estilo internacional.",
+        options: ["A) los objetivos políticos", "B) los fines sociales", "C) los límites históricos", "D) las fronteras territoriales", "E) las características geográficas"],
+        answer: 3,
+        explanation: "Al predominar un estilo internacional, desaparecen las fronteras territoriales en el arte."
+    },
+    {
+        practice: 3, id: "3.15",
+        context: null,
+        question: "Actualmente, la ópera, género musical por excelencia, al subordinar su música al drama, es una producción ____, carente de toda ____.",
+        options: ["A) superficial - originalidad", "B) impropia - armonía", "C) inestable - forma", "D) confusa - sentido", "E) falsa - autenticidad"],
+        answer: 4,
+        explanation: "Si carece de autenticidad, la producción se considera falsa."
+    },
+    {
+        practice: 3, id: "3.16",
+        context: null,
+        question: "Los fundamentos de la economía del bienestar no se pueden comprobar frente a los hechos del mundo material. La razón es simple: el bienestar ____.",
+        options: ["A) es limitado", "B) es insustituible", "C) es complejo", "D) no es negociable", "E) no es cuantificable"],
+        answer: 4,
+        explanation: "El bienestar no puede comprobarse materialmente porque no es cuantificable."
+    },
+    {
+        practice: 3, id: "3.17",
+        context: null,
+        question: "Cada uno de nosotros es más de lo que pensamos; pero se nos educa para el préstamo y la búsqueda: se nos encauza a servirnos de lo ajeno más que de lo ____.",
+        options: ["A) sensible", "B) práctico", "C) rico", "D) dependiente", "E) optimista"],
+        answer: 2,
+        explanation: "El texto sugiere que cada persona posee más riqueza interior de la que cree."
+    },
+
+    // =================== PRÁCTICA 4 ===================
+    {
+        practice: 4, id: "4.1",
+        context: null,
+        question: "La esperanza de un descanso despertó una súbita ____ en los viajeros, a la vista de la acogedora casa de la posada.",
+        options: ["A) duda", "B) decepción", "C) confusión", "D) sospecha", "E) felicidad"],
+        answer: 4,
+        explanation: "La esperanza de descanso ante una casa acogedora genera felicidad."
+    },
+    {
+        practice: 4, id: "4.2",
+        context: null,
+        question: "Aunque a investigar se aprende investigando, los institutos de investigación no deben integrarse con personal que ____ las técnicas.",
+        options: ["A) domine", "B) posea", "C) estudie", "D) desconozca", "E) admita"],
+        answer: 3,
+        explanation: "Aunque se aprende investigando, no conviene integrar personal que desconozca las técnicas."
+    },
+    {
+        practice: 4, id: "4.3",
+        context: null,
+        question: "Mediante cruces y adiestramiento, se ha obtenido gran número de destacados canarios cantores, pese a que la especie original pudiera haber sido un pájaro de canto ____.",
+        options: ["A) muy triste", "B) poco notable", "C) más bonito", "D) muy atractivo", "E) más delicado"],
+        answer: 1,
+        explanation: "Los canarios destacados contrastan con una especie original de canto poco notable."
+    },
+    {
+        practice: 4, id: "4.4",
+        context: null,
+        question: "Los Mayas de la costa, los de la altiplanicie y los de la selva, se entendían para el intercambio comercial; esto indica que tenían un lenguaje ____.",
+        options: ["A) rudimentario", "B) compartido", "C) auténtico", "D) sencillo", "E) elemental"],
+        answer: 1,
+        explanation: "Si podían entenderse para comerciar, tenían un lenguaje compartido."
+    },
+    {
+        practice: 4, id: "4.5",
+        context: null,
+        question: "Quien no acepta discusiones y se opone a la libre exposición de las ideas, actúa como un ____.",
+        options: ["A) sabio", "B) científico", "C) indeciso", "D) arrogante", "E) oportunista"],
+        answer: 3,
+        explanation: "Rechazar la discusión y la libre exposición de ideas revela arrogancia."
+    },
+    {
+        practice: 4, id: "4.6",
+        context: null,
+        question: "La Ciencia no tiene límites. Abraza la naturaleza ____ la que vemos y la invisible.",
+        options: ["A) abstracta", "B) actual", "C) viviente", "D) total", "E) biológica"],
+        answer: 3,
+        explanation: "La ciencia abarca la naturaleza total, visible e invisible."
+    },
+    {
+        practice: 4, id: "4.7",
+        context: null,
+        question: "La poesía es el arte que tiene por principal instrumento expresivo la ____.",
+        options: ["A) rima", "B) palabra", "C) naturaleza", "D) inspiración", "E) musicalidad"],
+        answer: 1,
+        explanation: "El instrumento expresivo principal de la poesía es la palabra."
+    },
+    {
+        practice: 4, id: "4.8",
+        context: null,
+        question: "Un espacio de silencio vale más que una nota vibrante, porque siempre lo ____ es mejor que lo ____.",
+        options: ["A) inexpresado - expresado", "B) inconsciente - consciente", "C) infinito - finito", "D) teórico - práctico", "E) breve - extenso"],
+        answer: 0,
+        explanation: "El silencio representa lo inexpresado, que el texto valora más que lo expresado."
+    },
+    {
+        practice: 4, id: "4.9",
+        context: null,
+        question: "Probablemente, lo más extraordinario del arte español sea esa ____ que permite reunir, en un fondo común, toda su ____.",
+        options: ["A) individualidad - historia", "B) fecundidad - tradición", "C) homogeneidad - historia", "D) originalidad - cultura", "E) subjetividad - arte"],
+        answer: 2,
+        explanation: "Reunir toda la historia en un fondo común indica homogeneidad."
+    },
+    {
+        practice: 4, id: "4.10",
+        context: null,
+        question: "El hombre no es hombre totalmente por el hecho de nacer, sino por el hecho de vivir y de recrear constantemente su ambiente: el hombre no ____ sino que se ____.",
+        options: ["A) nace - hace", "B) crea - recrea", "C) padece - sacrifica", "D) obedece - somete", "E) muere - transforma"],
+        answer: 0,
+        explanation: "La idea es que el ser humano no nace plenamente hecho, sino que se hace."
+    },
+    {
+        practice: 4, id: "4.11",
+        context: null,
+        question: "Desde épocas antiguas se ha considerado a la escultura ____ de la arquitectura. Sabemos, por ejemplo, que el cristianismo medieval creó un rico mundo de relieves y esculturas, que formaba un todo con la arquitectura de las iglesias.",
+        options: ["A) origen", "B) modelo", "C) producto", "D) complemento", "E) instrumento"],
+        answer: 3,
+        explanation: "La escultura aparece integrada a la arquitectura, por eso es su complemento."
+    },
+    {
+        practice: 4, id: "4.12",
+        context: null,
+        question: "Los animales herbívoros suelen estar más dispuestos a la huida que al ataque, por eso, generalmente, son ____.",
+        options: ["A) lentos", "B) pequeños", "C) torpes", "D) pacíficos", "E) numerosos"],
+        answer: 3,
+        explanation: "Si huyen más que atacan, suelen ser pacíficos."
+    },
+    {
+        practice: 4, id: "4.13",
+        context: null,
+        question: "La labor pedagógica de Carlos Gagini alcanza tal prestigio, que sus jefes lo presentan como un ____.",
+        options: ["A) literato ilustre", "B) educador excepcional", "C) sociólogo inigualable", "D) autodidacta sobresaliente", "E) historiador sin precedentes"],
+        answer: 1,
+        explanation: "La labor pedagógica corresponde a un educador excepcional."
+    },
+    {
+        practice: 4, id: "4.14",
+        context: null,
+        question: "El milagro de la germinación de la semilla es un proceso que garantiza la ____ no solo de las plantas, sino de todos los seres ____.",
+        options: ["A) fuerza - vivos", "B) calidad - existentes", "C) cantidad - vivos", "D) actividad - naturales", "E) existencia - vivos"],
+        answer: 4,
+        explanation: "La germinación garantiza la existencia de plantas y seres vivos."
+    },
+    {
+        practice: 4, id: "4.15",
+        context: null,
+        question: "Está bien que ____ el recuerdo de nuestras desdichas, pues constituyen el caudal de nuestra fortaleza.",
+        options: ["A) rectifiquemos", "B) atesoremos", "C) destruyamos", "D) corrijamos", "E) olvidemos"],
+        answer: 1,
+        explanation: "Las desdichas deben atesorarse porque fortalecen espiritualmente."
+    },
+    {
+        practice: 4, id: "4.16",
+        context: null,
+        question: "La memoria es a la personalidad individual, lo que es ____ a la personalidad colectiva de un pueblo.",
+        options: ["A) la sociedad", "B) el progreso", "C) la política", "D) la técnica", "E) la tradición"],
+        answer: 4,
+        explanation: "La tradición cumple para un pueblo una función semejante a la memoria en el individuo."
+    },
+    {
+        practice: 4, id: "4.17",
+        context: null,
+        question: "La naturaleza nunca se ha contentado con las formas ____, sino que ha creado toda clase de complejos diseños.",
+        options: ["A) planas", "B) lineales", "C) simétricas", "D) simples", "E) geométricas"],
+        answer: 3,
+        explanation: "La oposición es entre formas simples y diseños complejos."
+    },
+    {
+        practice: 4, id: "4.18",
+        context: null,
+        question: "Si todo grupo organizado necesita quien lo dirija, necesitará un ____.",
+        options: ["A) un sistema teórico", "B) una investigación científica", "C) un equipo humano", "D) una doctrina social", "E) una teoría política"],
+        answer: 2,
+        explanation: "Un grupo organizado que necesita dirección corresponde a un equipo humano."
+    },
+    {
+        practice: 4, id: "4.19",
+        context: null,
+        question: "La escultura de Grecia tenía como principal modelo al hombre, por eso sus artistas esculpieron las divinidades según el ideal de la belleza ____.",
+        options: ["A) natural", "B) espiritual", "C) universal", "D) humana", "E) perfecta"],
+        answer: 3,
+        explanation: "Si el modelo principal era el hombre, la belleza de las divinidades era humana."
+    },
+    {
+        practice: 4, id: "4.20",
+        context: null,
+        question: "La apertura de la famosa \"ruta de la seda\", en China, llevó consigo aspectos ____ y ____; por un lado, el cerrado mundo chino se benefició con el acercamiento a grandes civilizaciones; por otro, el rompimiento de su unidad produjo graves consecuencias.",
+        options: ["A) propios - ajenos", "B) positivos - negativos", "C) individuales - sociales", "D) simples - complejos", "E) materiales - espirituales"],
+        answer: 1,
+        explanation: "El acercamiento produjo beneficios, pero también problemas: aspectos positivos y negativos."
+    },
+    {
+        practice: 4, id: "4.21",
+        context: null,
+        question: "A pesar de la diferencia de sus temperamentos: fogoso uno, aristocrático el otro, hay un estricto ____ entre la carrera artística de Van Dyck y la de Rubens.",
+        options: ["A) paralelismo", "B) parcialismo", "C) antagonismo", "D) pluralismo", "E) dualismo"],
+        answer: 0,
+        explanation: "A pesar de sus diferencias, sus carreras artísticas guardan paralelismo."
+    },
+    {
+        practice: 4, id: "4.22",
+        context: null,
+        question: "Históricamente, en oposición a las danzas populares que eran sencillas e independientes de las reglas de etiqueta, surgieron las danzas de palacio ____ y ____.",
+        options: ["A) bulliciosas – atractivas", "B) pomposas – formales", "C) exóticas – escogidas", "D) espontáneas – serias", "E) extravagantes – rutinarias"],
+        answer: 1,
+        explanation: "Frente a danzas populares sencillas, las de palacio eran pomposas y formales."
+    },
+
+    // =================== PRÁCTICA 5 ===================
+    {
+        practice: 5, id: "5.1",
+        context: "Considere: Todos los perros disfrutan correr. Algunos perros disfrutan nadar. Algunos perros se parecen a sus dueños.",
+        question: "Si las tres proposiciones anteriores son verdaderas, ¿Cuál(es) de la(s) siguiente(s) tres también son verdadera(s)?\nI. Algunos perros disfrutan nadar y correr.\nII. Algunos dueños de perros se parecen a sus perros.\nIII. Todos los perros que disfrutan correr también disfrutan nadar.",
+        options: ["A) I y III", "B) I y II", "C) I", "D) II y III", "E) Ninguna"],
+        answer: 1,
+        explanation: "Algunos perros nadan y todos los perros corren; por tanto, algunos nadan y corren. Además, si algunos perros se parecen a sus dueños, algunos dueños se parecen a sus perros."
+    },
+    {
+        practice: 5, id: "5.2",
+        context: null,
+        question: "\"Ningún ave es mamífero\" es lógicamente equivalente a:",
+        options: ["A) Ningún mamífero es ave", "B) Algunos mamíferos son aves", "C) Algunos animales voladores no son mamíferos", "D) Todas las águilas son ovíparas", "E) Ninguna de las anteriores"],
+        answer: 0,
+        explanation: "\"Ningún ave es mamífero\" equivale lógicamente a \"Ningún mamífero es ave\"."
+    },
+    {
+        practice: 5, id: "5.3",
+        context: "Si voy al parque no patino. Si patino me encuentro con Raúl. Rosa es amiga de Raúl. A Rosa le gusta patinar. Si veo a Rosa tengo noticias de Joaquín. No me gustan las noticias.",
+        question: "En conclusión:",
+        options: ["A) No patino", "B) No voy al parque", "C) Recibo noticias", "D) Me encuentro con Raúl", "E) Patino"],
+        answer: 1,
+        explanation: "Si voy al parque, no patino. Pero si patino, veo a Rosa y recibo noticias, lo cual no me gusta. Entonces, no patino y, por tanto, no voy al parque."
+    },
+    {
+        practice: 5, id: "5.4",
+        context: "El contacto con la orina de las ratas puede provocar graves enfermedades. En la gran mayoría de hogares no hay presencia de ratas. La leptospirosis es una de esas enfermedades peligrosas.",
+        question: "De las tres oraciones citadas anteriormente, ¿Cuál es la conclusión de las otras dos?",
+        options: ["A) La orina de las ratas produce graves enfermedades", "B) La leptospirosis es una enfermedad peligrosa", "C) La mayoría de casas no están infectadas de ratas", "D) Todas las ratas contagian enfermedades graves", "E) Ninguna es conclusión de las otras dos"],
+        answer: 4,
+        explanation: "Ninguna de las afirmaciones se deduce necesariamente de las otras dos."
+    },
+    {
+        practice: 5, id: "5.5",
+        context: null,
+        question: "Si todos los celetos son arbinos, y todos los funzos son celetos, entonces todos los funzos son arbinos. El argumento anterior:",
+        options: ["A) Es falso", "B) Es verdadero", "C) Es inválido", "D) Es válido", "E) No tiene sentido"],
+        answer: 3,
+        explanation: "La estructura lógica es válida: si todos los funzos son celetos y todos los celetos son arbinos, entonces todos los funzos son arbinos."
+    },
+    {
+        practice: 5, id: "5.6",
+        context: null,
+        question: "Todos los hombres son mortales. Sócrates es un hombre. Por lo tanto:",
+        options: ["A) Sócrates es mortal", "B) Sócrates no es hombre", "C) Todos los hombres son Sócrates", "D) Todos los mortales son Sócrates", "E) Ningún mortal es Sócrates"],
+        answer: 0,
+        explanation: "De \"Todos los hombres son mortales\" y \"Sócrates es hombre\" se concluye que Sócrates es mortal."
+    },
+    {
+        practice: 5, id: "5.7",
+        context: null,
+        question: "A Susan le gusta comer pizza. Susan repite a menudo todas las actividades que le gustan. Por tanto:",
+        options: ["A) Susan no pasa una semana sin comer pizza", "B) Susan come pizza frecuentemente", "C) A Mariela le gustan todas las pizzas", "D) Susan come pizza a diario", "E) Susan no hace cosas que no le gustan"],
+        answer: 1,
+        explanation: "Si Susan repite las actividades que le gustan y le gusta la pizza, entonces come pizza frecuentemente."
+    },
+    {
+        practice: 5, id: "5.8",
+        context: null,
+        question: "Todo A es Z. Ningún Z es B. Si ningún B es A entonces de P se concluye:",
+        options: ["A) P es falso", "B) P es verdadero", "C) P es equivalente a A", "D) P es idéntico a Z", "E) No tiene sentido la pregunta"],
+        answer: 1,
+        explanation: "La conclusión \"ningún B es A\" se sigue correctamente de las premisas dadas."
+    },
+    {
+        practice: 5, id: "5.9",
+        context: null,
+        question: "Algunos carros son lujosos. Algunos carros no son japoneses. Se concluye:",
+        options: ["A) Algunos carros no son lujosos", "B) Algunos carros japoneses son lujosos", "C) Ningún carro japonés es lujoso", "D) Todos los carros lujosos no son japoneses", "E) No es posible inferir nada válido"],
+        answer: 4,
+        explanation: "Las dos afirmaciones hablan de algunos carros distintos; no puede establecerse una relación válida entre lujo y origen japonés."
+    },
+    {
+        practice: 5, id: "5.10",
+        context: "Los ideales son esenciales para una democracia porque si no existieran ideales, tampoco existiría la democracia. Por supuesto, no basta solo con ideales, también deben cumplirse otros factores.",
+        question: "Una equivalencia del texto es:",
+        options: ["A) Si la democracia existe, entonces existen ideales", "B) Si existen ideales, entonces existe la democracia", "C) La democracia y los ideales son equivalentes", "D) Si la democracia no existe, entonces no existen ideales", "E) La existencia de la democracia queda garantizada por la existencia de ideales"],
+        answer: 0,
+        explanation: "El texto afirma que sin ideales no existe democracia; lógicamente: si existe democracia, existen ideales."
+    },
+    {
+        practice: 5, id: "5.11",
+        context: "Si M es campeón, entonces P gana o Q gana. Si P gana entonces M no es campeón. Si Q gana, entonces L no gana. De hecho M es campeón.",
+        question: "De lo anterior se infiere que:",
+        options: ["A) P gana", "B) L gana", "C) Q gana y L gana", "D) L no gana", "E) M pierde y P gana"],
+        answer: 3,
+        explanation: "Si M es campeón, entonces P o Q gana. Pero si P gana, M no sería campeón. Como M sí es campeón, Q gana; y si Q gana, L no gana."
+    },
+    {
+        practice: 5, id: "5.12",
+        context: null,
+        question: "Todos los frijoles de este saco son rojos. Los frijoles que tengo en mi mano salieron de este saco. Por tanto:",
+        options: ["A) Los frijoles que tengo en la mano no son del saco", "B) Los frijoles que tengo en la mano son rojos", "C) Los frijoles que salen de sacos son rojos", "D) Los frijoles que se encuentran en la mano deben ser rojos", "E) Los frijoles de este saco no son todos rojos"],
+        answer: 1,
+        explanation: "Si todos los frijoles del saco son rojos y los frijoles en la mano salieron del saco, entonces son rojos."
+    },
+    {
+        practice: 5, id: "5.13",
+        context: "Debo elegir entre L, F, D y G. Si elijo F no elijo L. Si elijo L debo elegir D. Elegir D es lo mismo que elegir G.",
+        question: "De lo anterior se concluye que:",
+        options: ["A) Elijo L", "B) Elijo F", "C) Elijo D", "D) Elijo G", "E) Elegir G es lo mismo que elegir F"],
+        answer: 3,
+        explanation: "La proposición IV establece directamente que elegir D es lo mismo que elegir G, por tanto se elige G."
+    },
+    {
+        practice: 5, id: "5.14",
+        context: null,
+        question: "Voy al cine o voy al teatro, entonces me divierto. No me divierto. Por tanto:",
+        options: ["A) voy al cine pero no al teatro", "B) Ni voy al cine ni voy al teatro", "C) me divierto si y solo si voy al cine", "D) Voy al teatro pero no al cine", "E) solo me divierto en el teatro"],
+        answer: 1,
+        explanation: "Si ir al cine o al teatro implica diversión, y no hay diversión, entonces no ocurrió ninguna de las dos acciones."
+    },
+    {
+        practice: 5, id: "5.15",
+        context: null,
+        question: "Si es falso que ningún político habla de manera aburrida, entonces es verdadero que:",
+        options: ["A) Algunos políticos no hablan de manera aburrida", "B) Todos los políticos aburren cuando hablan", "C) Algunos políticos son aburridos", "D) Los discursos políticos siempre son aburridos", "E) La política no es para gente alegre"],
+        answer: 0,
+        explanation: "Negar \"ningún político habla de manera aburrida\" implica que algunos políticos no hablan aburridamente."
+    },
+    {
+        practice: 5, id: "5.16",
+        context: null,
+        question: "Si todo A es B y todo B es C, entonces, necesariamente:",
+        options: ["A) Todo C es A", "B) Todo A es C", "C) Todo B es A", "D) Todo C es B", "E) Ninguna escrita anteriormente"],
+        answer: 1,
+        explanation: "Relación transitiva: si todo A es B y todo B es C, entonces todo A es C."
+    },
+    {
+        practice: 5, id: "5.17",
+        context: null,
+        question: "Luis es bombero. Todos los camiones de bomberos son rojos. Hoy Luis llegó a su casa manejando un camión que no es rojo. Por tanto:",
+        options: ["A) Luis tomó prestado un camión de su estación de bomberos", "B) Todos los camiones rojos son de bomberos", "C) Solo los camiones rojos son de bomberos", "D) El camión en el que llegó Luis a su casa no es de bomberos", "E) A veces Luis maneja camiones de bomberos"],
+        answer: 3,
+        explanation: "Todos los camiones de bomberos son rojos. El camión que manejaba Luis no era rojo; por tanto, no era de bomberos."
+    },
+    {
+        practice: 5, id: "5.18",
+        context: null,
+        question: "Los veganos no comen huevos porque los huevos son un producto animal. La validez de la frase anterior depende de una premisa faltante. ¿Cuál es?",
+        options: ["A) Ningún vegano come productos animales", "B) Los huevos son productos animales", "C) Los veganos comen algunos productos animales", "D) Ningún producto animal es bueno para la salud", "E) Comer muchos huevos sube el colesterol"],
+        answer: 0,
+        explanation: "Para concluir que los veganos no comen huevos porque son productos animales, debe asumirse que ningún vegano consume productos animales."
+    },
+    {
+        practice: 5, id: "5.19",
+        context: null,
+        question: "Un ave se distingue, por tener alas, plumas, un pico alargado y poder volar. Con base a la lógica anterior, un cerdo se distingue por tener:",
+        options: ["A) Cuatro patas, pelos, hocico redondo y poder correr", "B) Cuatro patas, pelos, hocico dentado y poder caminar", "C) Pelos, cuatro pezuñas, hocico redondo y poder caminar", "D) Pelos, hocico redondo, cuatro patas y poder caminar", "E) Hocico redondo, cuatro patas, cuatro pezuñas y poder caminar"],
+        answer: 3,
+        explanation: "La opción mantiene la misma estructura lógica de rasgos distintivos utilizada para definir al ave."
+    },
+    {
+        practice: 5, id: "5.20",
+        context: null,
+        question: "Ningún drama complejo es a la vez una comedia. Todas las tragedias de Shakespeare son dramas complejos. Por tanto:",
+        options: ["A) Ninguna comedia fue escrita por Shakespeare", "B) Ninguna tragedia de Shakespeare es a la vez una comedia", "C) Algunas tragedias de Shakespeare no son a la vez comedias", "D) Algunas tragedias de Shakespeare son a la vez comedias", "E) Ningunas de las anteriores"],
+        answer: 1,
+        explanation: "Si ninguna tragedia de Shakespeare puede ser comedia, entonces ninguna tragedia de Shakespeare es a la vez una comedia."
+    }
+];
+
+// ========================
+// APP STATE & LOGIC
+// ========================
+
+let currentQuestions = [];
+let currentIndex = 0;
+let userAnswers = {}; // index -> selectedOption
+let score = 0;
+
+const homeScreen = document.getElementById('screen-home');
+const quizScreen = document.getElementById('screen-quiz');
+const resultsScreen = document.getElementById('screen-results');
+
+function init() {
+    const grid = document.getElementById('practice-buttons');
+    practices.forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-secondary';
+        btn.innerHTML = `<span>${p.name}</span><span style="font-size:0.8em; opacity:0.7;">${p.count} preguntas</span>`;
+        btn.onclick = () => startPractice(p.id);
+        grid.appendChild(btn);
+    });
+}
+
+function startPractice(practiceId) {
+    currentQuestions = allQuestions.filter(q => q.practice === practiceId);
+    startQuiz();
+}
+
+function startFullExam() {
+    currentQuestions = [...allQuestions];
+    // Mezclar preguntas para el simulacro completo
+    currentQuestions.sort(() => Math.random() - 0.5);
+    startQuiz();
+}
+
+function startQuiz() {
+    currentIndex = 0;
+    userAnswers = {};
+    score = 0;
+    
+    homeScreen.classList.remove('active');
+    resultsScreen.classList.remove('active');
+    quizScreen.classList.add('active');
+    
+    updateProgress();
+    showQuestion();
+}
+
+function updateProgress() {
+    const pct = ((currentIndex + 1) / currentQuestions.length) * 100;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('question-counter').textContent = `Pregunta ${currentIndex + 1} de ${currentQuestions.length}`;
+    
+    const p = practices.find(x => x.id === currentQuestions[currentIndex].practice);
+    document.getElementById('practice-badge').textContent = p ? p.name.split(':')[0] : 'Simulacro';
+}
+
+function showQuestion() {
+    const q = currentQuestions[currentIndex];
+    
+    const contextBox = document.getElementById('context-box');
+    if (q.context) {
+        contextBox.style.display = 'block';
+        contextBox.textContent = q.context;
+    } else {
+        contextBox.style.display = 'none';
+    }
+    
+    document.getElementById('question-text').textContent = q.question;
+    
+    const container = document.getElementById('options-container');
+    container.innerHTML = '';
+    
+    const answered = userAnswers[currentIndex] !== undefined;
+    const selected = userAnswers[currentIndex];
+    
+    q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        if (answered) btn.classList.add('disabled');
+        
+        if (answered) {
+            if (idx === q.answer) {
+                btn.classList.add('correct-answer');
+            } else if (idx === selected && idx !== q.answer) {
+                btn.classList.add('selected-wrong');
+            }
+        } else {
+            btn.onclick = () => selectOption(idx);
+        }
+        
+        const letter = String.fromCharCode(65 + idx);
+        btn.innerHTML = `<span class="option-letter">${letter}</span><span>${opt.substring(3)}</span>`;
+        container.appendChild(btn);
+    });
+    
+    const expBox = document.getElementById('explanation-box');
+    const expText = document.getElementById('explanation-text');
+    if (answered) {
+        expBox.classList.add('show');
+        expText.textContent = q.explanation;
+    } else {
+        expBox.classList.remove('show');
+    }
+    
+    document.getElementById('btn-prev').disabled = currentIndex === 0;
+    document.getElementById('btn-next').textContent = currentIndex === currentQuestions.length - 1 ? 'Finalizar ✓' : 'Siguiente →';
+}
+
+function selectOption(idx) {
+    if (userAnswers[currentIndex] !== undefined) return;
+    
+    userAnswers[currentIndex] = idx;
+    const q = currentQuestions[currentIndex];
+    
+    if (idx === q.answer) {
+        score++;
+    }
+    
+    showQuestion();
+}
+
+function nextQuestion() {
+    if (currentIndex < currentQuestions.length - 1) {
+        currentIndex++;
+        updateProgress();
+        showQuestion();
+    } else {
+        finishQuiz();
+    }
+}
+
+function prevQuestion() {
+    if (currentIndex > 0) {
+        currentIndex--;
+        updateProgress();
+        showQuestion();
+    }
+}
+
+function finishQuiz() {
+    quizScreen.classList.remove('active');
+    resultsScreen.classList.add('active');
+    
+    const total = currentQuestions.length;
+    const correct = score;
+    const wrong = total - correct;
+    const pct = Math.round((correct / total) * 100);
+    
+    document.getElementById('score-text').textContent = pct + '%';
+    document.getElementById('score-circle').style.setProperty('--pct', pct);
+    
+    document.getElementById('stat-correct').textContent = correct;
+    document.getElementById('stat-wrong').textContent = wrong;
+    document.getElementById('stat-total').textContent = total;
+    
+    document.getElementById('review-container').style.display = 'none';
+}
+
+function showReview() {
+    const container = document.getElementById('review-list');
+    container.innerHTML = '';
+    
+    currentQuestions.forEach((q, idx) => {
+        const answered = userAnswers[idx];
+        const isCorrect = answered === q.answer;
+        const isSkipped = answered === undefined;
+        
+        const div = document.createElement('div');
+        div.className = `review-item ${isCorrect ? 'correct-border' : 'wrong-border'}`;
+        
+        const statusClass = isSkipped ? 'skipped' : (isCorrect ? 'correct' : 'wrong');
+        const statusText = isSkipped ? 'SIN RESPONDER' : (isCorrect ? 'CORRECTO' : 'INCORRECTO');
+        
+        div.innerHTML = `
+            <span class="label label-${isCorrect ? 'correct' : 'wrong'}">${q.id} · ${statusText}</span>
+            <p style="margin:0.5rem 0; font-weight:600;">${q.question}</p>
+            ${q.context ? `<p style="font-style:italic; color:var(--text-light); font-size:0.9rem; margin-bottom:0.5rem;">${q.context}</p>` : ''}
+            <p style="margin:0.25rem 0;"><strong>Tu respuesta:</strong> ${answered !== undefined ? q.options[answered] : '—'}</p>
+            <p style="margin:0.25rem 0; color:var(--success);"><strong>Correcta:</strong> ${q.options[q.answer]}</p>
+            <div class="explanation show" style="margin-top:0.75rem;">
+                <strong>💡 Explicación:</strong> ${q.explanation}
+            </div>
+        `;
+        container.appendChild(div);
+    });
+    
+    document.getElementById('review-container').style.display = 'block';
+    document.getElementById('review-container').scrollIntoView({ behavior: 'smooth' });
+}
+
+function goHome() {
+    resultsScreen.classList.remove('active');
+    homeScreen.classList.add('active');
+}
+
+// Initialize
+init();
+</script>
+
+</body>
+</html>
